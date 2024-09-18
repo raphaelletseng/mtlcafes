@@ -23,6 +23,10 @@
         background-color: lightgrey;
     }
 
+    .label-mtl_food {
+        background-color: #31a354;
+    }
+
     #legend {
         padding: 10px 20px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -83,6 +87,19 @@
     <div class="map-overlay" id="legend">
         <h2>27 Montréal Cafés</h2>
         <p>Click on a café to visit their website</p>
+        <!-- <div class="label-box"></div>
+            <input type="radio" id="all" checked="checked" name="layer">
+            <label class="label-all" for="all">All</label>
+        </div>
+        <div class="label-box">
+            <input type="radio" id="cafe" name="layer">
+            <label class="label-mtl_cafes" for="mtl_cafes">Cafes</label>
+        </div>
+
+        <div class="label-box">
+            <input type="radio" id="food" name="layer">
+            <label class="label-mtl_food" for="mtl_food">Food spots</label> -->
+        </div>
     </div>
 
     <script>
@@ -101,7 +118,7 @@
                 'type': 'circle',
                 'source': {
                     'type': 'geojson',
-                    'data': 'mtlcafes.geojson'
+                    'data': 'cafes.geojson'
                 },
                 'paint': {
                     'circle-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#F57F17', '#8a2be2'],
@@ -114,6 +131,78 @@
                 }
             });
         });
+
+        map.on('load', function () {
+            map.addLayer({
+                'id': 'mtl_food',
+                'type': 'circle',
+                'source': {
+                    'type': 'geojson',
+                    'data': 'food.geojson'
+                },
+                'paint': {
+                    'circle-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#F57F17', '#2be28a'],
+                    'circle-stroke-width': 0,
+                    'circle-opacity': 0.9,
+                    'circle-radius': 6
+                },
+                'layout': {
+                    'visibility': 'visible' // Initially, set this layer to be visible
+                }
+            });
+        });
+
+
+        // function toggleLayer(layerId) {
+        //     const visibility = map.getLayoutProperty(layerId, 'visibility');
+        //     if (visibility === 'visible') {
+        //         map.setLayoutProperty(layerId, 'visibility', 'none');
+        //     } else {
+        //         map.setLayoutProperty(layerId, 'visibility', 'visible');
+        //     }
+        // }
+
+
+        // // radio button control
+        // document.getElementById('legend').addEventListener('change', (event) => {
+        //     const type = event.target.id;
+        //     // update the map filter
+        //     if (type === 'mtl_cafes' || type === 'mtl_food') {
+        //         map.setLayoutProperty('approved', 'visibility', 'visible');
+        //         map.setLayoutProperty('application', 'visibility', 'visible');
+        //     } else if (type === 'approved') {
+        //         map.setLayoutProperty('approved', 'visibility', 'visible');
+        //         map.setLayoutProperty('application', 'visibility', 'none');
+        //     } else if (type === 'application') {
+        //         map.setLayoutProperty('approved', 'visibility', 'none');
+        //         map.setLayoutProperty('application', 'visibility', 'visible');
+        //     }
+        // });
+
+
+        // function updateLayerVisibility(selectedLayer) {
+        //     const layerIds = ['mtl_cafes', 'mtl_food'];
+
+        //     if (selectedLayer === 'all') {
+        //         layerIds.forEach(function (layerId) {
+        //             map.setLayoutProperty(layerId, 'visibility', 'visible');
+        //         });
+        //     } else {
+        //         layerIds.forEach(function (layerId) {
+        //             map.setLayoutProperty(layerId, 'visibility', 'none');
+        //         });
+        //         map.setLayoutProperty(selectedLayer, 'visibility', 'visible');
+        //     }
+        // }
+
+        // // Radio button control
+        // document.querySelectorAll('input[type=radio]').forEach(function (radio) {
+        //     radio.addEventListener('change', function (event) {
+        //         const selectedLayer = event.target.id === 'all' ? 'all' : event.target.id + '_locations';
+        //         updateLayerVisibility(selectedLayer);
+        //     });
+        // });
+
 
         const popup = new mapboxgl.Popup({
             closeButton: false,
@@ -173,6 +262,56 @@
             if (hoveredPointId !== null) {
                 map.setFeatureState(
                     { source: 'mtl_cafes', id: hoveredPointId },
+                    { hover: false }
+                );
+            }
+            hoveredPointId = null;
+        });
+
+
+        map.on('mousemove', 'mtl_food', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredPointId !== null) {
+                    map.setFeatureState(
+                        { source: 'mtl_food', id: hoveredPointId },
+                        { hover: false }
+                    );
+                }
+                hoveredPointId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'mtl_food', id: hoveredPointId },
+                    { hover: true }
+                );
+                const feature = e.features[0];
+            }
+        });
+
+        map.on('mouseenter', 'mtl_food', (e) => {
+            map.getCanvas().style.cursor = 'pointer';
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const name = e.features[0].properties["Name"];
+            const address = e.features[0].properties["Address"];
+
+            if(['mercator', 'equirectangular'].includes(map.getProjection().name)) {
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+            }
+
+            popup.setLngLat(coordinates )
+                .setHTML('<h4>' + name + '</h4>'
+                    +'<p>' + address + '</p>'
+                )
+                .addTo(map);
+
+        })
+
+        map.on('mouseleave', 'mtl_food', function () {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+            if (hoveredPointId !== null) {
+                map.setFeatureState(
+                    { source: 'mtl_food', id: hoveredPointId },
                     { hover: false }
                 );
             }
