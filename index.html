@@ -2,11 +2,11 @@
 <html>
     <head>
         <meta charset='utf-8' />
-        <title>27 Montreal Cafes</title>
+        <title>27 Montréal Cafés</title>
         <link rel="icon" href="favicon.ico" type="image/x-icon">
         <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
         <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
-        <link rel="stylesheet" href="styles.css">
+        <!-- <link rel="stylesheet" href="styles.css"> -->
         <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
     </head>
 <style>
@@ -24,10 +24,10 @@
     }
 
     #legend {
-        padding: 10px;
+        padding: 10px 20px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         line-height: 18px;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
 
     #map {
@@ -41,10 +41,14 @@
         bottom: 0;
         right: 0;
         background: white;
-        margin-right: 20px;
-        font-family: Arial, Helvetica, sans-serif;
+        margin: 20px;
+        font-family: 'Courier New', Courier, monospace, sans-serif;
         overflow: auto;
-        border-radius: 3px;
+        border-radius: 5px;
+    }
+
+    .map-overlay p {
+        font-family: 'Arial', sans-serif;
     }
 
     .mapboxgl-popup {
@@ -76,6 +80,10 @@
 
 <body>
     <div id="map"></div>
+    <div class="map-overlay" id="legend">
+        <h2>27 Montréal Cafés</h2>
+        <p>Click on a café to visit their website</p>
+    </div>
 
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoicmFwaGFlbGxldHNlbmciLCJhIjoiY2twcXg2MDYwMGZkYTJ2cGZpNXo2a3ZvaCJ9.BAK0uOJzRZZVsqNAbF3yRA';
@@ -129,16 +137,6 @@
             }
         });
 
-        map.on('mouseleave', 'state-fills', () => {
-            if (hoveredPointId !== null) {
-                map.setFeatureState(
-                    { source: 'states', id: hoveredPointId },
-                    { hover: false }
-                );
-            }
-            hoveredPointId = null;
-        });
-
         map.on('mouseenter', 'mtl_cafes', (e) => {
             map.getCanvas().style.cursor = 'pointer';
             const coordinates = e.features[0].geometry.coordinates.slice();
@@ -159,9 +157,26 @@
 
         })
 
+        map.on('click', 'mtl_cafes', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const name = e.features[0].properties["Name"];
+            const address = e.features[0].properties["Address"];
+            const website = e.features[0].properties["Website"];
+            if (website) {
+                window.open(website, "_blank", "noopener,noreferrer");
+            }
+        })
+
         map.on('mouseleave', 'mtl_cafes', function () {
             map.getCanvas().style.cursor = '';
             popup.remove();
+            if (hoveredPointId !== null) {
+                map.setFeatureState(
+                    { source: 'mtl_cafes', id: hoveredPointId },
+                    { hover: false }
+                );
+            }
+            hoveredPointId = null;
         });
 
     </script>
