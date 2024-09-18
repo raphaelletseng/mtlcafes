@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8' />
+        <title>26 Montreal Cafes</title>
+        <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+        <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+        <link rel="stylesheet" href="styles.css">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+    </head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .label-box {
+        padding-bottom: 5px;
+    }
+
+    .label-mtl_cafes {
+        background-color: lightgrey;
+    }
+
+    #legend {
+        padding: 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        line-height: 18px;
+        margin-bottom: 20px;
+    }
+
+    #map {
+        width: 100vw;
+        height: 100vh;
+        margin: auto;
+    }
+
+    .map-overlay {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: white;
+        margin-right: 20px;
+        font-family: Arial, Helvetica, sans-serif;
+        overflow: auto;
+        border-radius: 3px;
+    }
+
+    .mapboxgl-popup {
+        max-width: 280px !important;
+    }
+
+    .mapboxgl-popup-content h4 {
+        font-weight: 300;
+        font-size: 1.2em;
+        border-width: 0px 0px 0.5px 0px;
+        border-style: solid;
+        border-color: rgb(80, 80, 80);
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+
+    .mapboxgl-popup-content h2 {
+        font-weight: 500;
+        margin-top: 0.5em;
+        margin-bottom: 0.3em;
+    }
+
+    .mapboxgl-popup-content p {
+        font-weight: 300;
+        margin-top: 0.3em;
+        margin-bottom: 0em;
+    }
+</style>
+
+<body>
+    <div id="map"></div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoicmFwaGFlbGxldHNlbmciLCJhIjoiY2twcXg2MDYwMGZkYTJ2cGZpNXo2a3ZvaCJ9.BAK0uOJzRZZVsqNAbF3yRA';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v10',
+            center: [-73.5778, 45.5111],
+            zoom: 12.5
+        });
+        let hoveredPointId = null;
+
+        map.on('load', function () {
+            map.addLayer({
+                'id': 'mtl_cafes',
+                'type': 'circle',
+                'source': {
+                    'type': 'geojson',
+                    'data': 'mtlcafes.geojson'
+                },
+                'paint': {
+                    'circle-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#F57F17', '#8a2be2'],
+                    'circle-stroke-width': 0,
+                    'circle-opacity': 0.9,
+                    'circle-radius': 6
+                },
+                'layout': {
+                    'visibility': 'visible' // Initially, set this layer to be visible
+                }
+            });
+        });
+
+        const popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+
+        map.on('mousemove', 'mtl_cafes', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredPointId !== null) {
+                    map.setFeatureState(
+                        { source: 'mtl_cafes', id: hoveredPointId },
+                        { hover: false }
+                    );
+                }
+                hoveredPointId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'mtl_cafes', id: hoveredPointId },
+                    { hover: true }
+                );
+                const feature = e.features[0];
+            }
+        });
+
+        map.on('mouseleave', 'state-fills', () => {
+            if (hoveredPointId !== null) {
+                map.setFeatureState(
+                    { source: 'states', id: hoveredPointId },
+                    { hover: false }
+                );
+            }
+            hoveredPointId = null;
+        });
+
+        map.on('mouseenter', 'mtl_cafes', (e) => {
+            map.getCanvas().style.cursor = 'pointer';
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const name = e.features[0].properties["Name"];
+            const address = e.features[0].properties["Address"];
+
+            if(['mercator', 'equirectangular'].includes(map.getProjection().name)) {
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+            }
+
+            popup.setLngLat(coordinates )
+                .setHTML('<h4>' + name + '</h4>'
+                    +'<p>' + address + '</p>'
+                )
+                .addTo(map);
+
+        })
+
+        map.on('mouseleave', 'mtl_cafes', function () {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+
+    </script>
+</body>
+</html>
