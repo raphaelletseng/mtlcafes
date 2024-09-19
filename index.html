@@ -132,25 +132,25 @@
             });
         });
 
-        map.on('load', function () {
-            map.addLayer({
-                'id': 'mtl_food',
-                'type': 'circle',
-                'source': {
-                    'type': 'geojson',
-                    'data': 'food.geojson'
-                },
-                'paint': {
-                    'circle-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#F57F17', '#2be28a'],
-                    'circle-stroke-width': 0,
-                    'circle-opacity': 0.9,
-                    'circle-radius': 6
-                },
-                'layout': {
-                    'visibility': 'visible' // Initially, set this layer to be visible
-                }
-            });
-        });
+        // map.on('load', function () {
+        //     map.addLayer({
+        //         'id': 'mtl_food',
+        //         'type': 'circle',
+        //         'source': {
+        //             'type': 'geojson',
+        //             'data': 'food.geojson'
+        //         },
+        //         'paint': {
+        //             'circle-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#F57F17', '#2be28a'],
+        //             'circle-stroke-width': 0,
+        //             'circle-opacity': 0.9,
+        //             'circle-radius': 6
+        //         },
+        //         'layout': {
+        //             'visibility': 'visible' // Initially, set this layer to be visible
+        //         }
+        //     });
+        // });
 
 
         // function toggleLayer(layerId) {
